@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "entropy_threshold": 4.2,
+  "min_entropy_token_len": 16,
+  "canary_tokens": [
+    "CANARY_AKIA_IOSFODNN7EXAMPLE",
+    "CANARY_PASSWD_SECRET999!",
+    "CANARY_JWT_TOKEN_SECRET_SIMULATOR",
+    "CANARY_PRIVATE_KEY_PAYLOAD_TEST"
+  ],
+  "regex_rules": [
+    {
+      "name": "aws_access_key",
+      "pattern": "(?<![A-Z0-9])[A-Z0-9]{20}(?![A-Z0-9])",
+      "replacement": "[REDACTED_AWS_KEY]"
+    },
+    {
+      "name": "stripe_api_key",
+      "pattern": "(?i)sk_(?:live|test)_[0-9a-zA-Z]{24,}",
+      "replacement": "[REDACTED_STRIPE_KEY]"
+    },
+    {
+      "name": "jwt_token",
+      "pattern": "eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}",
+      "replacement": "[REDACTED_JWT]"
+    },
+    {
+      "name": "password_key_value",
+      "pattern": "(?i)(password|passwd|pwd|secret|token)\\s*[:=]\\s*[\"']?([^&\\s\"']+)",
+      "replacement": "\\1=[REDACTED_SECRET]"
+    },
+    {
+      "name": "email_address",
+      "pattern": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,7}\\b",
+      "replacement": "[REDACTED_EMAIL]"
+    },
+    {
+      "name": "credit_card_luhn",
+      "pattern": "\\b(?:\\d{4}[-\\s]?){3}\\d{4}\\b|\\b\\d{13,19}\\b",
+      "replacement": "[REDACTED_PAN]"
+    }
+  ],
+  "pseudonym_rules": [
+    {
+      "entity": "ipv4_address",
+      "pattern": "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b",
+      "prefix": "p_"
+    },
+    {
+      "entity": "host_fqdn",
+      "pattern": "\\b[a-zA-Z0-9-]+\\.(?:internal|corp|local|lan)\\b",
+      "prefix": "h_"
+    }
+  ]
+}
