@@ -168,3 +168,29 @@ Rather than streaming log text off-site, VeilOps mines log structural patterns l
 | **Tier 1 (Collector & Privacy)** | **Person 1** | Wire schema frozen in `contracts/payload.schema.json`; sample payloads (valid & invalid) created; validation script verified. | Build collector input plugins, Drain3 miner, and Egress Gate (Hours 4–12). |
 | **Tier 2 (SaaS & Reliability)** | **Person 2** | Ready to consume `payload.schema.json` into Ingest API, PostgreSQL + TimescaleDB RLS schema, and Redis Streams. | Implement Ingest API, idempotency, and RLS tenant separation (Hours 4–12). |
 | **Tier 3 (AIOps & Demo)** | **Person 3** | Sample payloads provide baseline schemas for baselines, topology graphs, and incident evidence cards. | Implement anomaly detection, topology graph, and incident grouping (Hours 4–12). |
+
+---
+
+## 8. Simulated-Telemetry Plan & Scenario Injector
+
+### A. Stream Adapter & Fallback Generator Design
+* **Adapter Design**: The `stream-adapter` module listens to the organizer's simulated stream (via Unix socket, TCP stream, or shared file descriptor) and translates foreign schemas into internal event models (`normalize.py`), passing them directly to collector inputs as if produced by native OS agents.
+* **Autonomous Fallback Generator**: If the external stream is unavailable or its format is unannounced at kickoff, an internal generator emits continuous telemetry:
+  * *Metrics*: Daily sinusoidal baseline ($S(t) = A \sin(\omega t) + B$) with Gaussian noise ($\mathcal{N}(0, \sigma^2)$) covering **CPU** (`cpu_pct`), **Memory** (`mem_pct`), **Disk** (`disk_pct`), **Bandwidth** (`net_in_bytes`, `net_out_bytes`), **Latency** (`latency_ms`), and **Packet Loss** (`packet_loss_pct`).
+  * *Syslog & Planted Canaries*: Realistic syslog feeds containing planted canary honey-tokens (`AKIA...`, `password=...`, `eyJ...`) to validate that the Egress Gate and canary scanner catch and scrub all leakage.
+  * *Failed-Login Bursts*: Synthetic PAM/SSH brute-force events tracking client IPs and usernames to exercise local sliding-window risk aggregation (`p_77d1`, `cat: "auth_fail"`).
+
+### B. Scenario Injector CLI (`simulator/scenario_injector.py`)
+A unified CLI triggers the eight judge scenarios deterministically on demand:
+
+| # | Scenario CLI Command | What It Injects | Expected System Behavior & Validation |
+| :- | :--- | :--- | :--- |
+| **1** | `python injector.py inject secret` | Plants fake API key (`sk-live-...`) and password into raw log stream. | Raw tab shows log; egress payload carries only template hash `9f3a1c`; canary scanner = 0 hits; SaaS stores 0 secrets. |
+| **2** | `python injector.py inject outage 90s` | Drops egress TCP connection to SaaS ingest for 90 seconds. | SaaS marks collector `Poor` at 60s; local SQLite outbox buffers payloads; on reconnect, buffer drains with zero lost/duplicate IDs. |
+| **3** | `python injector.py inject authburst` | Sends 60 failed SSH login attempts within 30 seconds from single source. | Local detector flags `cat: auth_fail`, `risk: high`, emits pseudonym `p_77d1`; zero cleartext usernames or IPs egress. |
+| **4** | `python injector.py inject latency` | Spikes network probe latency by +310ms and packet loss to 6.4%. | Collector aggregates p95 latency; SaaS flags link degradation, plots trend chart, and identifies downstream impacted services. |
+| **5** | `python injector.py inject cpu` | Injects synthetic CPU surge (99.1%) exceeding seasonal baseline profile. | SaaS AIOps flags anomaly ($z = 7.1$ robust z-score); generates evidence card with contributing resource signals. |
+| **6** | `python injector.py inject cascade` | Triggers uplink failure followed by DB timeout and API gateway 504 errors. | Union-find groups 9 raw alerts into 1 correlated incident; ranks root cause to uplink via topological graph. |
+| **7** | `python injector.py inject dup-ooo` | Replays previously acked payloads and transmits payloads out of chronological sequence. | Ingest API dedupes via `payload_id` index; TimescaleDB orders by `event_time_utc`; dashboard charts remain perfectly stable. |
+| **8** | `python injector.py inject remediate` | Injects actionable condition and triggers recommended runbook simulation. | Proposes runbook $\rightarrow$ policy check $\rightarrow$ admin approval $\rightarrow$ sandbox dry-run $\rightarrow$ execution on mock target $\rightarrow$ rollback verification $\rightarrow$ audit trail. |
+

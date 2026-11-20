@@ -40,6 +40,7 @@ The complete Phase 1 specification is available in [`docs/PHASE1_SECURITY_ARCHIT
 3. **Eight Before/After Redaction Examples**: Covering API keys, passwords, JWTs, IPs, usernames, emails, hostnames, and PANs.
 4. **Pseudonymization & Fingerprinting Deep Dive**: Salted HMAC-SHA256 for entities + Drain3 online template mining.
 5. **Bonus Privacy-Aware Pipeline**: Three structural controls (Typed Schema, Canary Tripwire, Signed Hash-Chained Ledger).
+6. **Simulated-Telemetry Plan & Scenario Injector**: Adapter architecture, fallback generator for CPU/memory/disk/bandwidth/latency/loss/syslog secrets/failed logins, and injector commands for the 8 live judge scenarios.
 
 ---
 
