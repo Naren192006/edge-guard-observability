@@ -175,6 +175,9 @@ class IncidentCorrelator:
             root = uf.find(alert.alert_id)
             clusters[root].append(alert)
 
+        if not hasattr(self, "cluster_incident_map"):
+            self.cluster_incident_map: Dict[str, str] = {}
+
         incidents = []
         for root_id, alerts in clusters.items():
             affected_components = sorted(list({a.component_id for a in alerts}))
@@ -183,8 +186,16 @@ class IncidentCorrelator:
             earliest_onset = min(a.onset_time_utc for a in alerts)
             max_severity = max(alerts, key=lambda x: 4 if x.severity == Severity.CRITICAL else (3 if x.severity == Severity.HIGH else (2 if x.severity == Severity.MEDIUM else 1))).severity
 
+            # Maintain stable incident ID for the same cluster of components
+            cluster_key = ",".join(affected_components)
+            if cluster_key not in self.cluster_incident_map:
+                self.cluster_incident_map[cluster_key] = f"INC-{self.incident_seq}"
+                self.incident_seq += 1
+
+            inc_id = self.cluster_incident_map[cluster_key]
+
             incidents.append({
-                "incident_id": f"INC-{self.incident_seq}",
+                "incident_id": inc_id,
                 "severity": max_severity,
                 "opened_at_utc": earliest_onset,
                 "affected_components": affected_components,
@@ -193,7 +204,6 @@ class IncidentCorrelator:
                 "raw_alerts_count": raw_alerts_count,
                 "noise_reduction": self.compute_noise_reduction(raw_alerts_count, 1),
             })
-            self.incident_seq += 1
 
         return incidents
 

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeilOps - Explainable AIOps & Incident Evidence Console</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #0b0f19; color: #e2e8f0; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .glass { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
+    .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="glass sticky top-0 z-50 px-6 py-3 border-b border-slate-800 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+          VeilOps <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-mono">AIOps Stage 4</span>
+        </h1>
+        <p class="text-xs text-slate-400">Metadata-Only Reasoning & Explainable Evidence Console</p>
+      </div>
+    </div>
+
+    <!-- Tenant & Status Selector -->
+    <div class="flex items-center gap-4 text-sm">
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">
+        <i class="fa-solid fa-building text-slate-400 text-xs"></i>
+        <span class="text-slate-400 text-xs">Tenant:</span>
+        <span id="tenantDisplay" class="font-semibold text-emerald-400">t_acme</span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">
+        <i class="fa-solid fa-earth-asia text-slate-400 text-xs"></i>
+        <span class="text-slate-400 text-xs">Region:</span>
+        <span class="font-semibold text-sky-400">ap-south</span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+        <span class="text-xs font-semibold uppercase tracking-wider">Collector Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Noise Reduction Live Banner -->
+  <section class="bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900/50 border-b border-indigo-500/20 px-6 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center">
+          <i class="fa-solid fa-compress text-sm"></i>
+        </div>
+        <div>
+          <span class="text-xs text-purple-300 uppercase tracking-wider font-semibold">Bonus Challenge: Alert-Noise Reduction</span>
+          <p class="text-sm font-medium text-white">
+            <span id="bannerRawCount" class="text-indigo-400 font-bold">9</span> Raw Alerts Merged &rarr; 
+            <span id="bannerIncCount" class="text-emerald-400 font-bold">1</span> Master Incident 
+            (<span id="bannerReductionPct" class="text-purple-300 font-bold">88.9%</span> Alert Noise Eliminated)
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="triggerScenario(6)" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3 py-1.5 rounded-md transition shadow">
+          <i class="fa-solid fa-bolt mr-1"></i> Trigger Uplink Cascade (9 Alerts)
+        </button>
+        <button onclick="triggerScenario(5)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md transition border border-slate-700">
+          <i class="fa-solid fa-microchip mr-1"></i> CPU Spike
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- Left Column: Incident List (4 cols) -->
+    <div class="lg:col-span-4 flex flex-col gap-4">
+      <div class="glass rounded-xl p-4 flex flex-col h-full border border-slate-800 shadow-xl">
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+          <h2 class="font-bold text-white flex items-center gap-2 text-sm uppercase tracking-wider">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> Active Incidents (<span id="incidentListCount">1</span>)
+          </h2>
+          <span class="text-xs text-slate-400">Union-Find Clustered</span>
+        </div>
+
+        <div id="incidentListContainer" class="flex flex-col gap-2.5 overflow-y-auto max-h-[700px] pr-1">
+          <!-- Incident Cards Injected via JS -->
+          <div onclick="selectIncident('INC-0142')" class="glass-card p-3.5 rounded-lg border-l-4 border-l-rose-500 cursor-pointer hover:bg-slate-800/60 transition shadow">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-mono text-xs font-bold text-rose-400">INC-0142</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-semibold uppercase">High</span>
+            </div>
+            <h3 class="font-semibold text-sm text-slate-100 mb-1">Uplink Packet Loss & Gateway Cascade</h3>
+            <p class="text-xs text-slate-400 mb-2">Affected: <code class="text-indigo-300">edge_sw2</code>, <code class="text-indigo-300">api_gw</code>, <code class="text-indigo-300">orders_db</code></p>
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span><i class="fa-regular fa-clock mr-1"></i>09:14:48 UTC</span>
+              <span class="text-emerald-400 font-medium">9 alerts merged</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Evidence Card & Safe Remediation (8 cols) -->
+    <div class="lg:col-span-8 flex flex-col gap-6">
+
+      <!-- Evidence Card Panel -->
+      <div class="glass rounded-xl p-6 border border-slate-800 shadow-xl">
+        <div class="flex items-start justify-between pb-4 border-b border-slate-800 mb-5">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span id="cardIncidentId" class="font-mono text-base font-bold text-indigo-400">INC-0142</span>
+              <span id="cardSeverityBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold uppercase tracking-wider">Severity: High</span>
+              <span class="text-xs text-slate-400">• Opened 09:14:48 UTC</span>
+            </div>
+            <h2 id="cardTitle" class="text-xl font-bold text-white">Network Uplink Degradation & Multi-Tier Cascade</h2>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-400 mb-0.5">Algorithm Confidence</div>
+            <div id="cardConfidenceScore" class="text-2xl font-black text-emerald-400 font-mono">82%</div>
+          </div>
+        </div>
+
+        <!-- Likely Cause Box -->
+        <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-lg p-4 mb-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+              <i class="fa-solid fa-bullseye text-indigo-400"></i> Identified Root Cause:
+            </span>
+            <code id="cardLikelyCauseNode" class="bg-indigo-900/60 text-indigo-200 px-2 py-0.5 rounded font-mono text-xs font-bold">edge_sw2 (switch)</code>
+          </div>
+          <p id="cardWhyThisCause" class="text-sm text-slate-200">
+            Earliest onset (09:14:48Z), sits strictly upstream in the topology DAG explaining 8 of 9 alerts (composite score: 0.82).
+          </p>
+        </div>
+
+        <!-- Contributing Signals Table -->
+        <div class="mb-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-slate-400"></i> Contributing Signals & Robust Z-Scores
+          </h3>
+          <div class="overflow-x-auto rounded-lg border border-slate-800">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-800/80 text-slate-400 uppercase font-semibold">
+                <tr>
+                  <th class="p-2.5">Component</th>
+                  <th class="p-2.5">Metric / Signal</th>
+                  <th class="p-2.5">Observed</th>
+                  <th class="p-2.5">Baseline</th>
+                  <th class="p-2.5">Robust Z-Score</th>
+                  <th class="p-2.5">Onset Time</th>
+                </tr>
+              </thead>
+              <tbody id="contributingSignalsBody" class="divide-y divide-slate-800 font-mono">
+                <tr class="hover:bg-slate-800/30">
+                  <td class="p-2.5 text-indigo-300 font-bold">edge_sw2</td>
+                  <td class="p-2.5 text-slate-300">packet_loss_pct</td>
+                  <td class="p-2.5 text-rose-400 font-bold">6.4%</td>
+                  <td class="p-2.5 text-slate-400">0.1%</td>
+                  <td class="p-2.5 text-rose-400">+7.1</td>
+                  <td class="p-2.5 text-slate-400">09:14:48Z</td>
+                </tr>
+                <tr class="hover:bg-slate-800/30">
+                  <td class="p-2.5 text-indigo-300 font-bold">api_gw</td>
+                  <td class="p-2.5 text-slate-300">latency_ms (p95)</td>
+                  <td class="p-2.5 text-amber-400 font-bold">350.0 ms</td>
+                  <td class="p-2.5 text-slate-400">30.0 ms</td>
+                  <td class="p-2.5 text-amber-400">+5.8</td>
+                  <td class="p-2.5 text-slate-400">09:14:55Z</td>
+                </tr>
+                <tr class="hover:bg-slate-800/30">
+                  <td class="p-2.5 text-indigo-300 font-bold">orders_db</td>
+                  <td class="p-2.5 text-slate-300">query_timeouts</td>
+                  <td class="p-2.5 text-amber-400 font-bold">28 /min</td>
+                  <td class="p-2.5 text-slate-400">0 /min</td>
+                  <td class="p-2.5 text-amber-400">+6.1</td>
+                  <td class="p-2.5 text-slate-400">09:15:02Z</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Counterfactual Proof ("Why Not Alternatives?") -->
+        <div class="mb-5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-scale-balanced text-slate-400"></i> Counterfactual Proof (Why NOT Alternative Components?)
+          </h3>
+          <div id="counterfactualsContainer" class="flex flex-col gap-2">
+            <div class="glass-card p-3 rounded-lg text-xs flex items-center justify-between border-l-2 border-slate-600">
+              <div>
+                <span class="font-bold text-slate-200">api_gw:</span>
+                <span class="text-slate-400 ml-1">Onset occurred 7s after root cause; downstream in topology DAG; explains only 3 of 9 alerts.</span>
+              </div>
+              <span class="text-slate-500 font-mono text-[10px] uppercase">Eliminated</span>
+            </div>
+            <div class="glass-card p-3 rounded-lg text-xs flex items-center justify-between border-l-2 border-slate-600">
+              <div>
+                <span class="font-bold text-slate-200">orders_db:</span>
+                <span class="text-slate-400 ml-1">Onset occurred 14s after root cause; downstream in topology DAG; explains only 1 of 9 alerts.</span>
+              </div>
+              <span class="text-slate-500 font-mono text-[10px] uppercase">Eliminated</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommended Action Box -->
+        <div class="glass-card p-4 rounded-xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 to-indigo-950/40">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-xs font-bold">HIGH RISK</span>
+              <span class="text-xs font-mono text-indigo-300">RBK-NET-FAILOVER-02</span>
+            </div>
+            <span class="text-xs text-amber-400 font-semibold"><i class="fa-solid fa-user-shield mr-1"></i>2 Admin Approvals Required</span>
+          </div>
+          <p id="actionDescription" class="text-sm font-medium text-slate-200 mb-3">
+            Inspect physical/virtual uplink errors and initiate traffic failover to secondary path.
+          </p>
+
+          <!-- Safe Remediation Closed-Loop Stepper -->
+          <div class="pt-3 border-t border-slate-800">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Safe Closed-Loop Remediation Workflow:
+            </div>
+            <div class="grid grid-cols-6 gap-1 text-center font-mono text-[10px] mb-3">
+              <div class="p-1.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300">1. Propose &check;</div>
+              <div class="p-1.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300">2. Policy &check;</div>
+              <div id="stepApproval" class="p-1.5 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300">3. Approval (1/2)</div>
+              <div id="stepDryRun" class="p-1.5 rounded bg-slate-800 text-slate-400">4. Dry Run</div>
+              <div id="stepExecute" class="p-1.5 rounded bg-slate-800 text-slate-400">5. Execute</div>
+              <div id="stepWatchdog" class="p-1.5 rounded bg-slate-800 text-slate-400">6. Watchdog (2m)</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-3">
+              <button id="btnApprove" onclick="approveAction()" class="text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg transition shadow flex items-center gap-2">
+                <i class="fa-solid fa-check"></i> Grant 2nd Approval & Execute
+              </button>
+              <button onclick="simulateRollback()" class="text-xs font-semibold bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 px-4 py-2 rounded-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate-left"></i> Simulate Watchdog Auto-Rollback
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Append-Only Audit Trail -->
+      <div class="glass rounded-xl p-5 border border-slate-800 shadow-xl">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-clipboard-check text-indigo-400"></i> Immutable Append-Only Audit Trail
+        </h3>
+        <div id="auditLogContainer" class="flex flex-col gap-2 font-mono text-xs max-h-40 overflow-y-auto">
+          <div class="p-2 rounded bg-slate-800/50 flex items-center justify-between text-slate-300">
+            <span>[09:14:48Z] PROPOSE: Remediation ACT-0142 generated for incident INC-0142</span>
+            <span class="text-slate-500">Auto</span>
+          </div>
+          <div class="p-2 rounded bg-slate-800/50 flex items-center justify-between text-slate-300">
+            <span>[09:14:49Z] POLICY_CHECK: Allowed in change window for ap-south datacenter</span>
+            <span class="text-emerald-400">PASS</span>
+          </div>
+          <div class="p-2 rounded bg-slate-800/50 flex items-center justify-between text-slate-300">
+            <span>[09:14:50Z] APPROVAL_1: Signed by admin_alice (1/2 approvals granted)</span>
+            <span class="text-amber-400">PENDING_2</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function triggerScenario(id) {
+      alert("Triggering Scenario " + id + " in AIOps Engine...");
+      location.reload();
+    }
+
+    function approveAction() {
+      document.getElementById('stepApproval').className = "p-1.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300";
+      document.getElementById('stepApproval').innerText = "3. Approved (2/2) ✓";
+      document.getElementById('stepDryRun').className = "p-1.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300";
+      document.getElementById('stepDryRun').innerText = "4. Dry Run ✓";
+      document.getElementById('stepExecute').className = "p-1.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300";
+      document.getElementById('stepExecute').innerText = "5. Executed ✓";
+      document.getElementById('stepWatchdog').className = "p-1.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 pulse-dot";
+      document.getElementById('stepWatchdog').innerText = "6. Recovered ✓";
+
+      const audit = document.getElementById('auditLogContainer');
+      const time = new Date().toISOString().substring(11, 19) + 'Z';
+      audit.innerHTML += `
+        <div class="p-2 rounded bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-between text-emerald-300">
+          <span>[${time}] APPROVAL_2: Signed by admin_bob. Executed simulated failover. Watchdog confirms latency returned to 15ms.</span>
+          <span class="text-emerald-400 font-bold">COMPLETED</span>
+        </div>
+      `;
+    }
+
+    function simulateRollback() {
+      document.getElementById('stepWatchdog').className = "p-1.5 rounded bg-rose-950/80 border border-rose-500/60 text-rose-300";
+      document.getElementById('stepWatchdog').innerText = "6. Auto-Rollback ↺";
+
+      const audit = document.getElementById('auditLogContainer');
+      const time = new Date().toISOString().substring(11, 19) + 'Z';
+      audit.innerHTML += `
+        <div class="p-2 rounded bg-rose-950/40 border border-rose-500/20 flex items-center justify-between text-rose-300">
+          <span>[${time}] WATCHDOG_TIMEOUT: Target metric failed to recover. Automated rollback restored primary route snapshot.</span>
+          <span class="text-rose-400 font-bold">ROLLED_BACK</span>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
