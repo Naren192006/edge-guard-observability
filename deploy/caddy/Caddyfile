@@ -1,0 +1,17 @@
+# Caddy mTLS Terminator for VeilOps Ingest API
+# Checks client certificate issued to collector before forwarding to FastAPI
+
+:8443 {
+    tls internal {
+        client_auth {
+            mode require_and_verify
+            trusted_ca_cert_file /etc/caddy/certs/ca.crt
+        }
+    }
+
+    reverse_proxy saas-ingest-ap-south:8000 {
+        header_up X-Client-Cert-Subject {tls_client_subject}
+        header_up X-Client-Cert-Serial {tls_client_serial}
+        header_up X-Client-Cert-SAN {tls_client_san}
+    }
+}

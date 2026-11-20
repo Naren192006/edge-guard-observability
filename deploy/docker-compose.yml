@@ -1,0 +1,174 @@
+version: '3.8'
+
+# ==============================================================================
+# VeilOps Multi-Region SaaS Deployment (Docker Compose)
+# Person 2: SaaS and Reliability Architect
+# Profiles:
+#   - saas-ap: ap-south region cell (TimescaleDB, Redis, Ingest API, Caddy mTLS)
+#   - saas-eu: eu-central region cell (TimescaleDB, Redis, Ingest API, Caddy mTLS)
+# ==============================================================================
+
+networks:
+  veilops-ap-net:
+    driver: bridge
+  veilops-eu-net:
+    driver: bridge
+
+volumes:
+  timescale-ap-data:
+  timescale-eu-data:
+  redis-ap-data:
+  redis-eu-data:
+
+services:
+  # ----------------------------------------------------------------------------
+  # REGION 1: ap-south (Asia/Kolkata)
+  # ----------------------------------------------------------------------------
+  postgres-ap-south:
+    image: timescale/timescaledb:latest-pg16
+    container_name: veilops-pg-ap-south
+    profiles: ["saas-ap", "all"]
+    environment:
+      POSTGRES_DB: veilops_ap_south
+      POSTGRES_USER: veilops_admin
+      POSTGRES_PASSWORD: veilops_secure_password_ap
+    volumes:
+      - timescale-ap-data:/var/lib/postgresql/data
+      - ../saas/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - veilops-ap-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veilops_admin -d veilops_ap_south"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-ap-south:
+    image: redis:7-alpine
+    container_name: veilops-redis-ap-south
+    profiles: ["saas-ap", "all"]
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-ap-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - veilops-ap-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  saas-ingest-ap-south:
+    build:
+      context: ../saas
+      dockerfile: Dockerfile
+    container_name: veilops-ingest-ap-south
+    profiles: ["saas-ap", "all"]
+    environment:
+      REGION: ap-south
+      DB_HOST: postgres-ap-south
+      DB_PORT: 5432
+      DB_NAME: veilops_ap_south
+      DB_USER: veilops_admin
+      DB_PASS: veilops_secure_password_ap
+      REDIS_HOST: redis-ap-south
+      REDIS_PORT: 6379
+      SCHEMA_PATH: /contracts/payload.schema.json
+    volumes:
+      - ../contracts:/contracts:ro
+    ports:
+      - "8000:8000"
+    networks:
+      - veilops-ap-net
+    depends_on:
+      postgres-ap-south:
+        condition: service_healthy
+      redis-ap-south:
+        condition: service_healthy
+
+  caddy-ap-south:
+    image: caddy:2-alpine
+    container_name: veilops-caddy-ap-south
+    profiles: ["saas-ap", "all"]
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/etc/caddy/certs:ro
+    networks:
+      - veilops-ap-net
+    depends_on:
+      - saas-ingest-ap-south
+
+  # ----------------------------------------------------------------------------
+  # REGION 2: eu-central (Europe/Frankfurt)
+  # ----------------------------------------------------------------------------
+  postgres-eu-central:
+    image: timescale/timescaledb:latest-pg16
+    container_name: veilops-pg-eu-central
+    profiles: ["saas-eu", "all"]
+    environment:
+      POSTGRES_DB: veilops_eu_central
+      POSTGRES_USER: veilops_admin
+      POSTGRES_PASSWORD: veilops_secure_password_eu
+    volumes:
+      - timescale-eu-data:/var/lib/postgresql/data
+      - ../saas/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - veilops-eu-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veilops_admin -d veilops_eu_central"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis-eu-central:
+    image: redis:7-alpine
+    container_name: veilops-redis-eu-central
+    profiles: ["saas-eu", "all"]
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-eu-data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - veilops-eu-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  saas-ingest-eu-central:
+    build:
+      context: ../saas
+      dockerfile: Dockerfile
+    container_name: veilops-ingest-eu-central
+    profiles: ["saas-eu", "all"]
+    environment:
+      REGION: eu-central
+      DB_HOST: postgres-eu-central
+      DB_PORT: 5432
+      DB_NAME: veilops_eu_central
+      DB_USER: veilops_admin
+      DB_PASS: veilops_secure_password_eu
+      REDIS_HOST: redis-eu-central
+      REDIS_PORT: 6379
+      SCHEMA_PATH: /contracts/payload.schema.json
+    volumes:
+      - ../contracts:/contracts:ro
+    ports:
+      - "8001:8000"
+    networks:
+      - veilops-eu-net
+    depends_on:
+      postgres-eu-central:
+        condition: service_healthy
+      redis-eu-central:
+        condition: service_healthy
