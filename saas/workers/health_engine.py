@@ -98,9 +98,9 @@ class CollectorHealthEngine:
         evaluated_signals: List[Tuple[HealthState, str]] = []
 
         # 1. Staleness Rules
-        if silence_seconds > 60.0:
+        if silence_seconds >= 60.0:
             evaluated_signals.append((HealthState.POOR, "COLLECTOR_OFFLINE"))
-        elif silence_seconds > 15.0:
+        elif silence_seconds >= 15.0:
             evaluated_signals.append((HealthState.FAIR, "STALE_DATA"))
 
         # 2. Critical Security

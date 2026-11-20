@@ -185,6 +185,7 @@ class AIOpsEngine:
         # 5. Group Incidents via Union-Find and Generate Evidence Cards
         grouped_clusters = self.correlator.group_incidents()
         generated_cards: List[EvidenceCard] = []
+        updated_active_cards: Dict[str, EvidenceCard] = {}
 
         for cluster in grouped_clusters:
             inc_id = cluster["incident_id"]
@@ -208,7 +209,7 @@ class AIOpsEngine:
                 noise_reduction=noise_metric,
             )
 
-            self.active_evidence_cards[inc_id] = card
+            updated_active_cards[inc_id] = card
             generated_cards.append(card)
 
             # Auto-propose remediation action
@@ -226,6 +227,7 @@ class AIOpsEngine:
                 action.policy_check(allowed_runbooks=allowed_runbooks, is_in_change_window=True)
                 self.remediation_actions[inc_id] = action
 
+        self.active_evidence_cards = updated_active_cards
         self.incidents_total = len(self.active_evidence_cards)
         return generated_cards
 

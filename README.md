@@ -159,6 +159,29 @@ Full specification available in [`docs/phase2_aiops_architecture.md`](docs/phase
 
 ---
 
+## ⚡ Phase 3 & 4: Implementation, Live Console & Demo (Person 3 Deliverables)
+
+Full specification available in [`docs/phase4_aiops_demo_runbook.md`](docs/phase4_aiops_demo_runbook.md):
+1. **Streaming AIOps Engine** (`saas/aiops/consumer.py`):
+   - Processes accepted wire payloads, evaluates seasonal baselines + River HSTrees.
+   - Enriches alerts within 15 seconds of spikes with contextual metrics and topology reachability.
+   - Merges cascading failures into unified incidents and manages closed-loop remediation actions.
+2. **Interactive Evidence & Remediation Web Console** (`web/index.html` & `web/server.py`):
+   - Modern Tailwind + glassmorphism single-page console.
+   - Live Alert-Noise Reduction meter (`88.9% - 93.3% Noise Eliminated`).
+   - Interactive Evidence Cards with likely cause, confidence, contributing signals table, and counterfactual elimination reasons ("Why not alternatives").
+   - Closed-loop remediation stepper (`PROPOSE` &rarr; `POLICY` &rarr; `APPROVAL` &rarr; `DRY RUN` &rarr; `EXECUTE` &rarr; `WATCHDOG` &rarr; `AUTO-ROLLBACK`).
+   - Append-only audit trail logging.
+3. **10-Minute False-Alarm & Noise Immunity Benchmark** (`saas/aiops/false_alarm_check.py`):
+   - 120 evaluation windows (600 seconds) of sinusoidal background variation.
+   - 3 planted transient batch spikes correctly suppressed as `info` with **0.00% False Alarm Rate**.
+4. **Live Scenario Demo Runner** (`saas/aiops/demo_runner.py`):
+   - Executes Scenarios 4, 5, 6, and 8 with rich terminal output on demand.
+5. **8-Slide Presentation Deck & Judge Q&A Guide** ([`docs/phase4_aiops_demo_runbook.md`](docs/phase4_aiops_demo_runbook.md)):
+   - Complete 8-slide deck, step-by-step Evidence Card walkthrough, and 3-sentence answers to all core judge questions.
+
+---
+
 ## 🚀 Verification & Quickstart
 
 ### 1. Execute Deep Canary Leak-Test Audit (Person 1 Phase 4 Audit)
