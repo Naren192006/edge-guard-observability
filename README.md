@@ -131,6 +131,34 @@ Full specification available in [`docs/phase1_aiops_and_demo.md`](docs/phase1_ai
 
 ---
 
+## 🏛️ Phase 2: Architecture & Technical Design (Person 3 Deliverables)
+
+Full specification available in [`docs/phase2_aiops_architecture.md`](docs/phase2_aiops_architecture.md):
+1. **Advanced Baselines & Anomaly Engine** (`saas/aiops/baselines.py`):
+   - 168-hour cyclic seasonal baselines using EWMA median and MAD.
+   - Robust z-score computation ($z = \frac{x - m}{1.4826 \times \text{MAD}}$) with outlier winsorization.
+   - Sustained-deviation rule ($|z| \ge 3.5$ in $\ge 3$ of last 5 evaluation windows).
+   - River Half-Space Trees (HSTrees) streaming multivariate anomaly model for joint signal shifts.
+2. **Topology Graph & Union-Find Incident Correlator** (`saas/aiops/correlate.py`):
+   - NetworkX pseudonymous dependency DAG.
+   - Union-Find clustering: merges alerts within $\le 120\text{s}$ and $\le 2\text{ hops}$ into a single incident.
+   - Alert-noise reduction dedupe key `(component, metric, severity)` and repeat counting.
+   - Flap-prevention: 5-minute (300s) recovery requirement before incident closure.
+3. **Multi-Factor Cause Ranking Engine** (`saas/aiops/rank.py`):
+   - Formula: $S(c) = 0.40 \cdot S_{\text{onset}} + 0.35 \cdot S_{\text{topo}} + 0.25 \cdot S_{\text{blast}}$.
+   - Counterfactual elimination proofs generating "Why not alternatives".
+4. **10-Rule Runbook Recommendation Library & Evidence Cards** (`saas/aiops/recommendations.py`):
+   - 10 cause-pattern to runbook mappings across disk, network, CPU, auth, memory, DB, DNS, queue, TLS, and service mesh.
+   - Strict JSON Schema for Evidence Cards ([`contracts/evidence_card.schema.json`](contracts/evidence_card.schema.json)).
+5. **Closed-Loop Safe Remediation State Machine** (`saas/aiops/remediation.py`):
+   - `PROPOSE -> POLICY_CHECK -> APPROVAL -> DRY_RUN -> EXECUTE -> VERIFY -> (COMPLETED | ROLLBACK) -> AUDIT`.
+   - Dual-admin approval for high-risk actions.
+   - 2-minute metric verification watchdog with automatic rollback if target metrics fail to recover.
+6. **Automated Test Suite** (`tests/test_phase2_aiops.py`):
+   - 6 comprehensive tests validating all Phase 2 AIOps components.
+
+---
+
 ## 🚀 Verification & Quickstart
 
 ### 1. Validate Wire Schemas (Person 1 Contracts Test)

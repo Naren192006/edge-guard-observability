@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VeilOpsEvidenceCard",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "incident_id",
+    "severity",
+    "opened_at_utc",
+    "affected_components",
+    "likely_cause",
+    "confidence",
+    "contributing_signals",
+    "why_this_cause",
+    "why_not_alternatives",
+    "suggested_action"
+  ],
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "pattern": "^INC-[0-9]{4,6}$"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "opened_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "affected_components": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "likely_cause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_id", "confidence_score", "reasoning"],
+      "properties": {
+        "component_id": { "type": "string" },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "reasoning": { "type": "string" }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "contributing_signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "metric_or_pattern", "observed_value", "z_score", "onset_time_utc"],
+        "properties": {
+          "source": { "type": "string" },
+          "metric_or_pattern": { "type": "string" },
+          "observed_value": { "type": "number" },
+          "baseline_value": { "type": "number" },
+          "z_score": { "type": "number" },
+          "onset_time_utc": { "type": "string", "format": "date-time" }
+        }
+      },
+      "minItems": 1
+    },
+    "why_this_cause": {
+      "type": "string"
+    },
+    "why_not_alternatives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidate_id", "elimination_reason"],
+        "properties": {
+          "candidate_id": { "type": "string" },
+          "elimination_reason": { "type": "string" }
+        }
+      }
+    },
+    "suggested_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runbook_id", "description", "risk_level", "requires_approval", "automated_safe_simulation"],
+      "properties": {
+        "runbook_id": { "type": "string" },
+        "description": { "type": "string" },
+        "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
+        "requires_approval": { "type": "boolean" },
+        "approvers_required": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "automated_safe_simulation": { "type": "boolean" }
+      }
+    },
+    "noise_reduction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_alerts_merged", "incidents_created", "noise_reduction_ratio_pct"],
+      "properties": {
+        "raw_alerts_merged": { "type": "integer", "minimum": 1 },
+        "incidents_created": { "type": "integer", "minimum": 1 },
+        "noise_reduction_ratio_pct": { "type": "number", "minimum": 0.0, "maximum": 100.0 }
+      }
+    }
+  }
+}
