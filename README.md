@@ -139,6 +139,33 @@ Verifies that all valid test payloads pass and leaking or malformed payloads are
 python contracts/validate_contracts.py
 ```
 
+### 2. Verify Tier 1 Local Collector Architecture (Person 1 Phase 2 & 3 Suite)
+Executes unit tests verifying SQLite WAL outbox, hash-chained egress ledger (`prev_hash`), Shannon entropy calculation, salted HMAC pseudonymization, canary tripwire hard-blocking, Drain3 template mining, and the 8 scenario injections:
+```bash
+python tests/test_collector_phase2.py
+python tests/test_phase3_collector.py
+```
+
+### 3. Launch Local Collector Egress Proof Panel (Person 1 Phase 3 UI)
+Starts the local on-prem proof panel with interactive HTMX endpoints (Raw data tab with visible secrets, Payload tab with exact wire bytes and SHA-256 digests, Hash verification button, and live leak_blocked counter):
+```bash
+python collector/ui/proof_panel.py
+# Access in browser at http://localhost:8088
+```
+
+### 4. Run Scenario Injector CLI (8 Live Scenarios)
+Trigger judge scenarios on demand:
+```bash
+python injector.py inject secret       # 1. Raw log secret leak prevention
+python injector.py inject outage 90s   # 2. SaaS connectivity loss & outbox drain
+python injector.py inject authburst    # 3. Repeated failed logins & pseudonymous risk
+python injector.py inject latency      # 4. Latency spike & packet loss surge
+python injector.py inject cpu          # 5. CPU deviation from seasonal baseline
+python injector.py inject cascade      # 6. Uplink failure incident cascade
+python injector.py inject dup-ooo      # 7. Duplicate & out-of-order delivery
+python injector.py inject remediate    # 8. Automated remediation simulation
+```
+
 ### 2. Run Baseline Prototype Simulation (Person 3 AIOps)
 Simulates seasonal baseline warmup, suppression of transient spikes via the **3-of-5 sustained deviation rule** ($|z| > 3.5$), and alerting on sustained anomalies:
 ```bash
