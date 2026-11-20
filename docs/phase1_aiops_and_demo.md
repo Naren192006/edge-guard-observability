@@ -20,7 +20,22 @@ Traditional observability systems require forwarding raw logs, host parameters, 
 
 ---
 
-## 2. Mermaid Data-Flow Sketch with Trust Boundary
+## 2. Why Raw Telemetry Must Stay in the Customer Environment and Why the SaaS Receives Metadata Only
+
+The fundamental architectural principle of VeilOps is **privacy by construction**: sensitive raw telemetry remains physically bounded within the customer's on-premises environment, while the central SaaS operates purely as a metadata-driven reasoning engine.
+
+### Four Core Drivers for Local Data Retention:
+- **Data Exposure and Larger Attack Surface:** Centralizing raw logs, packet traces, and host telemetry into a multi-tenant cloud consolidates the operational footprint of every customer into a single catastrophic target. An attacker compromising a traditional observability SaaS gains immediate lateral visibility and access to production infrastructure dumps across all tenants simultaneously.
+- **Compliance and Data Residency:** Raw logs and system traces frequently capture regulated end-user PII, payment information, and patient health records. Transmitting raw telemetry across geographical boundaries breaches strict data sovereignty and residency mandates—including GDPR (cross-border data transfers), HIPAA (PHI exposure), PCI-DSS (cardholder data leakage), and SOC 2 Trust Principles.
+- **Secrets in Logs:** Developers and third-party microservices routinely print unredacted secrets—API keys, bearer tokens, passwords, database connection strings, and internal private keys—into application logs and stack traces. Regex scrubbing alone is notoriously porous and prone to failure on irregular formats, whereas a metadata-only egress contract with zero free-text fields makes secret leakage structurally impossible.
+- **Customer Trust and Local Control:** Enterprise organizations and regulated industries demand cryptographic certainty and full ownership of their operational data. By keeping raw records confined to local customer storage with automated 24-hour retention purges, customer security teams maintain total control and can independently verify every outbound byte using the on-site Egress Proof Panel.
+
+### Operational Intelligence with Metadata Alone:
+With metadata alone—consisting of 5-second statistical metric rollups (min, max, mean, p95), Drain3 log template hashes with frequencies, salted pseudonymous component IDs, and sliding-window security risk scores—the central SaaS possesses complete mathematical fidelity to model seasonal baselines, detect multi-metric anomalies via robust z-scores, correlate cascading alerts across topology graphs, and deliver explainable root-cause evidence cards without ever exposing or transmitting a single character of sensitive raw telemetry.
+
+---
+
+## 3. Mermaid Data-Flow Sketch with Trust Boundary
 
 The system architecture divides strictly across a single authenticated trust boundary. Raw telemetry stays in Tier 1; only signed, schema-validated, metadata-only payloads enter Tier 2.
 
@@ -109,7 +124,7 @@ flowchart TD
 
 ---
 
-## 3. Four Core Use Cases
+## 4. Four Core Use Cases
 
 VeilOps translates complex raw telemetry into deterministic, privacy-preserving operational actions across four distinct production failure modes.
 
@@ -167,7 +182,7 @@ VeilOps translates complex raw telemetry into deterministic, privacy-preserving 
 
 ---
 
-## 4. Prioritized Feature List & Minimum Viable Demo (MVD)
+## 5. Prioritized Feature List & Minimum Viable Demo (MVD)
 
 Using the **MoSCoW** prioritization framework, the project balances rapid hackathon delivery with enterprise-grade reliability and architectural depth.
 
@@ -219,7 +234,7 @@ The Minimum Viable Demo consists of:
 
 ---
 
-## 5. Answers to Mandatory Phase 1 Questions
+## 6. Answers to Mandatory Phase 1 Questions
 
 ### Q1: What was the situation before observability?
 > **Answer:**  
@@ -236,7 +251,7 @@ The Minimum Viable Demo consists of:
 
 ---
 
-## 6. Realistic 24-Hour Plan for Three People
+## 7. Realistic 24-Hour Plan for Three People
 
 | Time Interval | Person 1: Collector & Privacy Lead | Person 2: SaaS & Reliability Lead | Person 3: Product, AIOps & Demo Lead | Key Deliverables & Validation |
 | :--- | :--- | :--- | :--- | :--- |
@@ -264,7 +279,7 @@ If time constraints emerge, features will be trimmed strictly in the following o
 
 ---
 
-## 7. Bonus Architectural Capabilities in the MVD
+## 8. Bonus Architectural Capabilities in the MVD
 
 ### 1. Alert-Noise Reduction
 - **Mechanism:** Alerts are tagged with a deduplication key `(component_id, category, severity)`. Recurring deviations within the active window increment an internal counter rather than generating distinct alert cards.
@@ -292,7 +307,7 @@ If time constraints emerge, features will be trimmed strictly in the following o
 
 ---
 
-## 8. Cross-Team Technical Alignment Summary
+## 9. Cross-Team Technical Alignment Summary
 
 To ensure seamless integration across Person 1, Person 2, and Person 3 during Phase 2:
 

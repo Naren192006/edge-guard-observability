@@ -28,7 +28,19 @@ flowchart LR
 
 ---
 
-## 2. Allow-Listed Fields Transmitted Across Trust Boundary
+## 2. Why Raw Telemetry Must Stay in the Customer Environment and Why the SaaS Receives Metadata Only
+
+- **Data Exposure and Larger Attack Surface:** Forwarding raw logs and system traces creates an immense central attack honeypot; compromising the multi-tenant SaaS exposes all tenants' infrastructure, architecture, and private operations at once.
+- **Compliance and Data Residency:** Raw logs invariably capture PII, banking records, and health data, triggering immediate compliance breaches under GDPR (cross-border transfers), HIPAA, PCI-DSS, and national data-sovereignty mandates when shipped off-premises.
+- **Secrets in Logs:** Software routinely leaks unredacted API tokens, credentials, private certificates, and passwords into logs; regex scrubbing alone is inherently leaky, making a strictly typed schema with zero free-text fields the only mathematically safe guarantee.
+- **Customer Trust and Local Control:** Regulated enterprises require complete, verifiable ownership of their operational data; storing raw records locally under 24-hour purge policies preserves customer sovereignty while an immutable hash-chained ledger provides verifiable proof of zero leak.
+
+*What the SaaS can still do with metadata alone:*  
+With metadata alone (5-second statistical rollups, Drain3 template hashes, pseudonymous IDs, and risk scores), the SaaS can fully detect complex multi-metric anomalies, correlate alerts across 2-hop topology graphs, rank root causes with mathematical confidence, and suggest actionable remediations without ever seeing a single byte of sensitive raw data.
+
+---
+
+## 3. Allow-Listed Fields Transmitted Across Trust Boundary
 
 | Field Name | Type | Example Value | Why It Is Safe |
 | :--- | :--- | :--- | :--- |
@@ -54,7 +66,7 @@ flowchart LR
 
 ---
 
-## 3. Eight Before/After Redaction & Transformation Examples
+## 4. Eight Before/After Redaction & Transformation Examples
 
 | Category | Raw Data (Collector Local Store Only) | Sanitized Output Crossing Trust Boundary | Transformation Mechanism |
 | :--- | :--- | :--- | :--- |
@@ -69,7 +81,7 @@ flowchart LR
 
 ---
 
-## 4. Simulated Telemetry Plan & Scenario Injector CLI
+## 5. Simulated Telemetry Plan & Scenario Injector CLI
 
 * **Baseline Stream Adapter:** Generates realistic sinusoidal daily curves for `cpu_pct`, `memory_pct`, `latency_ms`, and `packet_loss_pct` with configurable Gaussian noise. Ingests simulated syslog streams with injected canary strings.
 * **Scenario Injector CLI Commands:**
@@ -84,7 +96,7 @@ flowchart LR
 
 ---
 
-## 5. Team Roles & Ownership Matrix
+## 6. Team Roles & Ownership Matrix
 
 | Member | Primary Role | Core Modules Owned |
 | :--- | :--- | :--- |
@@ -94,7 +106,7 @@ flowchart LR
 
 ---
 
-## 6. Official Answers to Phase 1 Sheet Questions
+## 7. Official Answers to Phase 1 Sheet Questions
 
 * **Q1: What was the situation before observability?**  
   Each site relied on separate tools and manual log searching (`grep`), static thresholds produced noisy duplicate alerts, and the only central view required shipping raw logs off site, which exposed secrets and raised compliance risk.
