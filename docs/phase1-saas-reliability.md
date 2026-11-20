@@ -250,7 +250,30 @@ The hackathon evaluation sheet scores real-time reliability and performance thro
 
 ---
 
-## 6. Integration Checklist & Next Phase Hand-Off
+## 6. 24-Hour Feasibility Plan & Milestone Breakdown
+
+| Owner | Owner Area | Hours 0 to 4 (Setup & Schemas) | Hours 4 to 12 (Core Logic) | Hours 12 to 18 (Integration & UI) | Hours 18 to 24 (Validation & Rehearsal) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Person 1** | **Collector & Privacy** | Wire schema (`payload.schema.json`) & policy schema freeze, stream adapter, simulator baseline | Input plugins (psutil, probes, syslog), Redaction engine (regex + Shannon entropy), Drain3 log templates, Egress Gate allow-list, Canary tripwire scanner, Local failed-login detector | SQLite WAL outbox with retry & backoff, Hash-chained egress ledger (`prev_hash`), Local Egress Proof Panel (HTMX/FastAPI), Scenario injector CLI (8 judge scenarios) | Planted secret leak tests, Forced outage drills, Proof panel hash verification rehearsal, Demo timing polish |
+| **Person 2** | **SaaS & Reliability** | Docker Compose multi-region cells, PostgreSQL 16 + TimescaleDB init DDL, Redis Streams, Caddy mTLS edge config | FastAPI Ingest API, UUIDv7 idempotency deduplication, Postgres Row-Level Security (RLS) tenant isolation, Multi-region cell routing (`ap-south`, `eu-central`) | Health-state evaluation engine (4 states + hysteresis + stale data downgrade), Query REST API & SSE push, Collector fleet & health dashboard views | Latency histogram measurement panel (p50/p95/p99), End-to-end load tests, Sent-vs-received ID reconciliation proof panel (zero loss/duplicates) |
+| **Person 3** | **AIOps & Demo** | Baseline & robust Z-score prototype on sample vectors, One-page system data-flow sketch | Streaming anomaly detector, NetworkX dependency topology graph, Union-Find incident correlation & clustering (2-min window, 2-hop radius) | Root-cause ranking engine (onset + topology + blast radius), AIOps Evidence Card generation, Recommendation rule catalog, Incident investigation UI | Safe remediation simulation state machine (propose -> approval -> dry run -> rollback), False-alarm tuning against 10-min clean stream, Slide deck (<= 8 slides) & Q&A prep |
+
+### Scope Cut Strategy (If Time Runs Short — In Priority Order)
+
+To ensure high-scoring deliverables are protected under tight hackathon constraints:
+
+1. **Cut 1 (First to Drop) — Drop Half-Space Trees Model:**  
+   *Fallback:* Retain seasonal EWMA median + MAD and robust Z-score for anomaly detection; drop River Half-Space Trees streaming model.
+2. **Cut 2 — Drop Second Regional Cell (`eu-central`):**  
+   *Fallback:* Host both tenants (`t_acme`, `t_globex`) inside `ap-south`. Tenant isolation, Postgres RLS, and tenant-prefixed Redis streams remain 100% provable without multi-region deployment overhead.
+3. **Cut 3 — Drop Live External Network Polling (SNMP / Raw Flows):**  
+   *Fallback:* Rely purely on the synthetic telemetry stream adapter and built-in metric generator rather than configuring physical SNMP daemons or pcap taps.
+4. **Strictly Protected Non-Negotiables (NEVER Cut):**  
+   *Must retain:* **Egress Gate allow-list check**, **Local Egress Proof Panel with verify button**, **SQLite WAL outbox with zero loss guarantee**, and **Explainable AIOps Evidence Cards with confidence scores**.
+
+---
+
+## 7. Integration Checklist & Next Phase Hand-Off
 
 | Component | Owner | Hand-Off Artifact to Person 1 & Person 3 |
 | :--- | :--- | :--- |
