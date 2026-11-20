@@ -161,7 +161,13 @@ Full specification available in [`docs/phase2_aiops_architecture.md`](docs/phase
 
 ## 🚀 Verification & Quickstart
 
-### 1. Validate Wire Schemas (Person 1 Contracts Test)
+### 1. Execute Deep Canary Leak-Test Audit (Person 1 Phase 4 Audit)
+Scans 100% of outbox payloads and hash-chained ledger blocks for planted secrets and verifies Egress Gate tripwire interception:
+```bash
+python tests/test_leak_scanner.py
+```
+
+### 2. Validate Wire Schemas (Person 1 Contracts Test)
 Verifies that all valid test payloads pass and leaking or malformed payloads are rejected:
 ```bash
 python contracts/validate_contracts.py
