@@ -1,0 +1,18 @@
+tenant_id: "t_acme"
+policy_v: 12
+allowed_metrics:
+  - cpu_pct
+  - mem_pct
+  - disk_pct
+  - net_in_bytes
+  - net_out_bytes
+  - latency_ms
+  - packet_loss_pct
+  - tcp_retrans_pct
+  - conn_active
+allowed_severities:
+  - warn
+  - error
+  - critical
+max_fingerprints_per_window: 500
+salt_rotation_interval_days: 90

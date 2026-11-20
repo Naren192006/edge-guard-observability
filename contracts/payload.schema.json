@@ -1,0 +1,247 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://veilops.io/schemas/v3/payload.schema.json",
+  "title": "VeilOpsEgressPayload",
+  "description": "Strict, privacy-by-construction wire contract for egress from VeilOps Local Collector to SaaS Ingest. Contains zero free-text fields.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "payload_id",
+    "tenant_id",
+    "collector_id",
+    "schema_v",
+    "policy_v",
+    "event_time_utc",
+    "source_tz",
+    "seq",
+    "prev_hash",
+    "metrics",
+    "log_fingerprints",
+    "security",
+    "health",
+    "signature"
+  ],
+  "properties": {
+    "payload_id": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID/UUIDv7 strictly formatted identifier generated at batch close."
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^t_[a-z0-9_-]{2,32}$",
+      "description": "Pre-registered tenant identifier matching collector mTLS certificate binding."
+    },
+    "collector_id": {
+      "type": "string",
+      "pattern": "^c_[a-z0-9_-]{2,32}$",
+      "description": "Unique identifier of the sending collector instance."
+    },
+    "schema_v": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000,
+      "description": "Wire schema version number."
+    },
+    "policy_v": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000,
+      "description": "Version of the active tenant egress policy."
+    },
+    "event_time_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "ISO 8601 UTC timestamp of window completion."
+    },
+    "source_tz": {
+      "type": "string",
+      "pattern": "^[A-Za-z_]+(/[A-Za-z_]+)?$",
+      "description": "IANA timezone string for client-side localization."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonically increasing sequence number per collector instance."
+    },
+    "prev_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hex digest of previous payload in local tamper-evident outbox chain."
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["src", "name", "win_s", "mean", "p95", "max", "n"],
+        "properties": {
+          "src": {
+            "type": "string",
+            "pattern": "^h_[a-f0-9]{6,16}$",
+            "description": "HMAC pseudonym of the monitored host/source."
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "cpu_pct",
+              "mem_pct",
+              "disk_pct",
+              "net_in_bytes",
+              "net_out_bytes",
+              "latency_ms",
+              "packet_loss_pct",
+              "tcp_retrans_pct",
+              "conn_active"
+            ],
+            "description": "Approved metric enum from telemetry catalog."
+          },
+          "win_s": {
+            "type": "integer",
+            "enum": [1, 5, 10, 15, 30, 60],
+            "description": "Aggregation window width in seconds."
+          },
+          "mean": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1000000000.0,
+            "description": "Arithmetic mean of metric across window."
+          },
+          "p95": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1000000000.0,
+            "description": "95th percentile value in window."
+          },
+          "max": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1000000000.0,
+            "description": "Peak sample value in window."
+          },
+          "min": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1000000000.0,
+            "description": "Minimum sample value in window."
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "Number of raw samples aggregated."
+          }
+        }
+      }
+    },
+    "log_fingerprints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["src", "tpl", "sev", "count"],
+        "properties": {
+          "src": {
+            "type": "string",
+            "pattern": "^h_[a-f0-9]{6,16}$",
+            "description": "HMAC pseudonym of the host generating logs."
+          },
+          "tpl": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{6,16}$",
+            "description": "Hex digest of Drain3 template hash."
+          },
+          "sev": {
+            "type": "string",
+            "enum": ["debug", "info", "warn", "error", "critical"],
+            "description": "Normalized syslog severity enum."
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Number of occurrences of this template during window."
+          }
+        }
+      }
+    },
+    "security": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["src", "cat", "count", "win_s", "risk"],
+        "properties": {
+          "src": {
+            "type": "string",
+            "pattern": "^p_[a-f0-9]{4,16}$",
+            "description": "HMAC pseudonym of the client/principal entity."
+          },
+          "cat": {
+            "type": "string",
+            "enum": [
+              "auth_fail",
+              "port_scan",
+              "ddos_suspect",
+              "rate_limit",
+              "priv_escalation_attempt"
+            ],
+            "description": "Security incident classification enum."
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000,
+            "description": "Count of matching security events in window."
+          },
+          "win_s": {
+            "type": "integer",
+            "enum": [5, 10, 30, 60, 300],
+            "description": "Evaluation window in seconds."
+          },
+          "risk": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"],
+            "description": "Categorical risk assessment from local heuristics."
+          }
+        }
+      }
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "reason_codes"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["excellent", "good", "fair", "poor"],
+          "description": "Four-state local health indicator."
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ALL_SYSTEMS_NORMAL",
+              "CPU_BASELINE_DEV",
+              "MEM_BASELINE_DEV",
+              "DISK_CAPACITY_WARN",
+              "LATENCY_SPIKE",
+              "PACKET_LOSS_ELEVATED",
+              "AUTH_BRUTE_FORCE_SUSPECT",
+              "STALE_DATA",
+              "COLLECTOR_OFFLINE"
+            ]
+          },
+          "description": "Standardized reason codes explaining health downgrade."
+        }
+      }
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^ed25519:[A-Za-z0-9+/=]{44,88}$",
+      "description": "Ed25519 cryptographic signature generated by collector private key."
+    }
+  }
+}

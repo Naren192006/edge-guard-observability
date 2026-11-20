@@ -1,0 +1,55 @@
+{
+  "payload_id": "01JD8Z3K7Q9X4M2V6T1B5N8R0E",
+  "tenant_id": "t_globex",
+  "collector_id": "c_lon_dc2",
+  "schema_v": 3,
+  "policy_v": 4,
+  "event_time_utc": "2026-11-20T09:15:15Z",
+  "source_tz": "Europe/London",
+  "seq": 10492,
+  "prev_hash": "c89b048b6245ad689a72132e0cf0d64a85493b82937e0c03417531735d4e1122",
+  "metrics": [
+    {
+      "src": "h_9b14de",
+      "name": "latency_ms",
+      "win_s": 5,
+      "mean": 382.4,
+      "p95": 490.1,
+      "max": 512.0,
+      "min": 210.0,
+      "n": 5
+    },
+    {
+      "src": "h_9b14de",
+      "name": "packet_loss_pct",
+      "win_s": 5,
+      "mean": 4.8,
+      "p95": 6.2,
+      "max": 6.8,
+      "min": 2.1,
+      "n": 5
+    }
+  ],
+  "log_fingerprints": [
+    {
+      "src": "h_9b14de",
+      "tpl": "81fd2a",
+      "sev": "warn",
+      "count": 54
+    }
+  ],
+  "security": [
+    {
+      "src": "p_91aa",
+      "cat": "port_scan",
+      "count": 180,
+      "win_s": 60,
+      "risk": "medium"
+    }
+  ],
+  "health": {
+    "state": "poor",
+    "reason_codes": ["LATENCY_SPIKE", "PACKET_LOSS_ELEVATED"]
+  },
+  "signature": "ed25519:p98xmN4K7+sB9x2LQe03p17qO/6dK6Fh5v42QdE8l0uW="
+}
